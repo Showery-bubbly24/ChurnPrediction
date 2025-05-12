@@ -1,8 +1,9 @@
 import pickle
 from fastapi import FastAPI
-from apis_models.default_model import Request
+from api_models.default_model import Request
 from sqlalchemy import create_engine
 import pandas as pd
+from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from typing import List
 
 # ———————————————————————————————————————————————————————————————————————————————————————————————————————————
@@ -92,10 +93,11 @@ def training():
     if df['adv_Churn'].count() > 500:
         print('Lets train!')
 
-        cls_model = cls_model.fit(df.drop('adv_Churn', axis=1), df['adv_Churn'])
+        new_model = cls_model.fit(df.drop('adv_Churn', axis=1), df['adv_Churn'])
+        ennsemble = VotingClassifier([('old', cls_model), ('new', new_model)], voting='soft')
 
         with open('clas_model.pkl', 'wb') as file:
-            pickle.dump(cls_model, file)
+            pickle.dump(ennsemble, file)
 
         return 1
     else:
